@@ -136,26 +136,28 @@ bool FatFS::parse_entry_(msdos_dir_entry& entry, vector<FileInfo>& files)
 
 	FileInfo file;
 	
-	if (!long_name_)
-	{
-		char tmp[10] = "";
-		strncpy(tmp, (char*) entry.name, 5);
-		for (int j = 5; j >= 0; j--)
-			if (tmp[j] == ' ')
-				tmp[j] = 0;
-		if (!(entry.attr & (1 << 4))) // if not dir
-			strcat(tmp, ".");
-		strncat(tmp, (char*) &entry.name[5], 3);
-		int s = strlen(tmp);
-		for (int j = s - 1; j >= s - 3; j--)
-			if (tmp[j] == ' ')
-				tmp[j] = 0;
-		if ((!(entry.attr & (1 << 4))) && entry.name[5] == ' ' && entry.name[6] == ' ' && entry.name[7] == ' ')
-			tmp[strlen(tmp) - 1] = 0;
+	char tmp[10] = "";
+	strncpy(tmp, (char*) entry.name, 5);
+	for (int j = 5; j >= 0; j--)
+		if (tmp[j] == ' ')
+			tmp[j] = 0;
+	if (!(entry.attr & (1 << 4))) // if not dir
+		strcat(tmp, ".");
+	strncat(tmp, (char*) &entry.name[5], 3);
+	int s = strlen(tmp);
+	for (int j = s - 1; j >= s - 3; j--)
+		if (tmp[j] == ' ')
+			tmp[j] = 0;
+	if ((!(entry.attr & (1 << 4))) && entry.name[5] == ' ' && entry.name[6] == ' ' && entry.name[7] == ' ')
+		tmp[strlen(tmp) - 1] = 0;
 
+	file.info = "";
+	if (!long_name_)
 		file.name = tmp;
-	}
 	else
+		file.info = "short name: "s + tmp + "; ";
+	
+	if (long_name_)
 	{
 		file.name = name_;
 
@@ -166,7 +168,6 @@ bool FatFS::parse_entry_(msdos_dir_entry& entry, vector<FileInfo>& files)
 	file.size = entry.size;
 	file.dir = entry.attr & (1 << 4);
 
-	file.info = "";
 	file.id = ftell(file_) - sizeof (entry);
 	if (entry.attr & (1 << 0)) file.info += "ro ";
 	if (entry.attr & (1 << 1)) file.info += "hidden ";
