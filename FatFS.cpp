@@ -20,10 +20,10 @@ bool FatFS::init(FILE* file)
 	char sysid[32] = "";
 	strncpy(sysid, (char*) sector.system_id, 8);
 
-	fat32_ = (root_entries_ == 0);
 	sector_size_ = sector.sector_size[0] + sector.sector_size[1] * 256;
 	cluster_size_ = sector.sec_per_clus * sector_size_;
 	root_entries_ = sector.dir_entries[0] + sector.dir_entries[1] * 256;
+	fat32_ = (root_entries_ == 0);
 	fat_size_ = sector_size_ * (fat32_ ? sector.fat32.length : sector.fat_length);
 	fat_start_ = sector_size_ * sector.reserved;
 	root_start_ = fat_start_ + fat_size_ * sector.fats;
