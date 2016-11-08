@@ -60,6 +60,9 @@ string FatFS::get_time_(uint16_t time)
 }
 bool FatFS::ls(fid_t fid, vector<FileInfo>& files)
 {
+	name_ = "";
+	long_name_ = false;
+
 	if (fid == ROOT_ID)
 	{
 		fseek(file_, root_start_, SEEK_SET);
@@ -119,26 +122,47 @@ bool FatFS::parse_entry_(msdos_dir_entry& entry, vector<FileInfo>& files)
 		return false;
 	if (entry.name[0] == 0xE5)
 		return true;
-	if (entry.attr == 0xF)
+	if (entry.attr == 0xF) // vfat long file name
+	{
+		long_name_ = true;
+		const int addresses[] = { 1, 3, 5, 7, 9, 14, 16, 18, 20, 22, 24, 28, 30 }; // name addresses
+		char str[14] = "";
+		for (int i = 0; i < 13; i++)
+			str[i] = ((char*) &entry)[addresses[i]];
+		name_ = str + name_;
+
 		return true;
+	}
 
 	FileInfo file;
-	char tmp[10] = "";
-	strncpy(tmp, (char*) entry.name, 5);
-	for (int j = 5; j >= 0; j--)
-		if (tmp[j] == ' ')
-			tmp[j] = 0;
-	if (!(entry.attr & (1 << 4))) // if not dir
-		strcat(tmp, ".");
-	strncat(tmp, (char*) &entry.name[5], 3);
-	int s = strlen(tmp);
-	for (int j = s - 1; j >= s - 3; j--)
-		if (tmp[j] == ' ')
-			tmp[j] = 0;
-	if ((!(entry.attr & (1 << 4))) && entry.name[5] == ' ' && entry.name[6] == ' ' && entry.name[7] == ' ')
-		tmp[strlen(tmp) - 1] = 0;
+	
+	if (!long_name_)
+	{
+		char tmp[10] = "";
+		strncpy(tmp, (char*) entry.name, 5);
+		for (int j = 5; j >= 0; j--)
+			if (tmp[j] == ' ')
+				tmp[j] = 0;
+		if (!(entry.attr & (1 << 4))) // if not dir
+			strcat(tmp, ".");
+		strncat(tmp, (char*) &entry.name[5], 3);
+		int s = strlen(tmp);
+		for (int j = s - 1; j >= s - 3; j--)
+			if (tmp[j] == ' ')
+				tmp[j] = 0;
+		if ((!(entry.attr & (1 << 4))) && entry.name[5] == ' ' && entry.name[6] == ' ' && entry.name[7] == ' ')
+			tmp[strlen(tmp) - 1] = 0;
 
-	file.name = tmp;
+		file.name = tmp;
+	}
+	else
+	{
+		file.name = name_;
+
+		name_ = "";
+		long_name_ = false;
+	}
+
 	file.size = entry.size;
 	file.dir = entry.attr & (1 << 4);
 
