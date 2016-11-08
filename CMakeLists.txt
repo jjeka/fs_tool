@@ -7,6 +7,7 @@ set(SOURCE_FILES
 	Main.cpp
 	Application.cpp
 	FatFS.cpp
+	Ext2FS.cpp
 	Utils.cpp)
 
 add_executable(fs ${SOURCE_FILES})

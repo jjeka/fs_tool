@@ -1,2 +1,5 @@
 Filesystem homework
 by Nikitenko Evgeny
+
+makefs.sh [fat16/fat32/ext2] for creating image file
+cmake for building fs tool

@@ -8,7 +8,9 @@
 #include <iostream>
 #include "Utils.h"
 #include "FSInterface.h"
+
 #include "FatFS.h"
+#include "Ext2FS.h"
 
 using std::string;
 using std::vector;

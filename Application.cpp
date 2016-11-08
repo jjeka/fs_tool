@@ -3,6 +3,7 @@
 Application::Application()
 {
 	fs_.push_back(std::make_unique<FatFS>());
+	fs_.push_back(std::make_unique<Ext2FS>());
 }
 
 void Application::main()
