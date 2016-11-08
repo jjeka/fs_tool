@@ -18,21 +18,38 @@ bool FatFS::init(FILE* file)
 	fread(&sector, sizeof (sector), 1, file);
 
 	char sysid[32] = "";
-	char label[32] = "";
 	strncpy(sysid, (char*) sector.system_id, 8);
-	strncpy(label, (char*) sector.fat16.vol_label, 11);
 
+	fat32_ = (root_entries_ == 0);
 	sector_size_ = sector.sector_size[0] + sector.sector_size[1] * 256;
 	cluster_size_ = sector.sec_per_clus * sector_size_;
 	root_entries_ = sector.dir_entries[0] + sector.dir_entries[1] * 256;
-	fat_size_ = sector_size_ * sector.fat_length;
+	fat_size_ = sector_size_ * (fat32_ ? sector.fat32.length : sector.fat_length);
 	fat_start_ = sector_size_ * sector.reserved;
 	root_start_ = fat_start_ + fat_size_ * sector.fats;
 	data_start_ = root_start_ + root_entries_ * 32;
+	fat_entry_size_ = (fat32_ ? 4 : 2);
+	if (fat32_)
+		root_cluster_ = sector.fat32.root_cluster;
 
-	info_ = "System id: "s + sysid + "\n";
+	info_ = fat32_ ? "FAT32 filesystem\n" : "FAT16 filesystem\n";
+	info_ += "System id: "s + sysid + "\n";
 	info_ += "Number of fats: "s + std::to_string(sector.fats) + "\n";
-	info_ += "Volume label: "s + (char*) label + "\n";
+	if (!fat32_)
+	{
+		char label[32] = "";
+		strncpy(label, (char*) sector.fat16.vol_label, 11);
+		info_ += "Volume label: "s + (char*) label + "\n";
+	}
+	else
+	{
+		char label[32] = "";
+		strncpy(label, (char*) sector.fat32.vol_label, 11);
+		info_ += "Volume label: "s + (char*) label + "\n";
+		char type[32] = "";
+		strncpy(type, (char*) sector.fat32.fs_type, 8);
+		info_ += "FS type: "s + (char*) type + "\n";
+	}
 	info_ += "Cluster size: "s + std::to_string(cluster_size_) + " bytes\n";
 	return true;
 }
@@ -58,12 +75,13 @@ string FatFS::get_time_(uint16_t time)
 	return to_string_time(time >> 11) + ":" + to_string_time((time >> 5) & ((1 << 6) - 1)) + ":" + 
 		to_string_time((time & ((1 << 5) - 1)) * 2);
 }
+
 bool FatFS::ls(fid_t fid, vector<FileInfo>& files)
 {
 	name_ = "";
 	long_name_ = false;
 
-	if (fid == ROOT_ID)
+	if (fid == ROOT_ID && !fat32_)
 	{
 		fseek(file_, root_start_, SEEK_SET);
 		for (int i = 0; i < root_entries_; i++)
@@ -77,19 +95,27 @@ bool FatFS::ls(fid_t fid, vector<FileInfo>& files)
 	else
 	{
 		msdos_dir_entry entry;
-		fseek(file_, fid, SEEK_SET);
-		fread(&entry, sizeof (entry), 1, file_);
-		if (entry.size < 0)
+
+		int cluster;
+		if (fat32_ && fid == ROOT_ID)
+			cluster = root_cluster_ - 2;
+		else
 		{
-			info_ = "invalid size value (needed 0): " + std::to_string(entry.size);
-			return false;
+			fseek(file_, fid, SEEK_SET);
+			fread(&entry, sizeof (entry), 1, file_);
+			if (entry.size < 0)
+			{
+				info_ = "invalid size value (needed 0): " + std::to_string(entry.size);
+				return false;
+			}
+
+			cluster = entry.start + (fat32_ ? (entry.starthi << 16) : 0) - 2;
 		}
 
 		bool ready = false;
-		int cluster = entry.start - 2;
 		while (!ready)
 		{
-			int seek = data_start_ + cluster * cluster_size_;
+			size_t seek = data_start_ + cluster * cluster_size_;
 			fseek(file_, seek, SEEK_SET);
 
 			for (int i = 0; i < cluster_size_ / 32; i++)
@@ -105,9 +131,15 @@ bool FatFS::ls(fid_t fid, vector<FileInfo>& files)
 
 			if (!ready)
 			{
-				fseek(file_, fat_start_ + (2 + cluster) * 2, SEEK_SET);
-				int16_t new_cluster;
-				fread(&new_cluster, sizeof (new_cluster), 1, file_);
+				fseek(file_, fat_start_ + (2 + cluster) * fat_entry_size_, SEEK_SET);
+				int new_cluster;
+				if (fat32_)
+				{
+					fread(&new_cluster, 4, 1, file_);
+					new_cluster &= (1 << 28) - 1;
+				}
+				else
+					fread(&new_cluster, 2, 1, file_);
 
 				cluster = new_cluster - 2;
 			}
@@ -197,7 +229,7 @@ bool FatFS::cat(fid_t fid, string& output)
 	memset(buf, 0, entry.size + 1);
 
 	int num_clusters = entry.size / cluster_size_ + (entry.size % cluster_size_ ? 1 : 0);
-	int cluster = entry.start - 2;
+	int cluster = entry.start + (fat32_ ? (entry.starthi << 16) : 0) - 2;
 
 	for (int i = 0; i < num_clusters; i++)
 	{
@@ -205,15 +237,21 @@ bool FatFS::cat(fid_t fid, string& output)
 		if (size == 0)
 			size = cluster_size_;
 
-		int seek = data_start_ + cluster * cluster_size_;
+		size_t seek = data_start_ + cluster * cluster_size_;
 		fseek(file_, seek, SEEK_SET);
 		fread(&buf[i * cluster_size_], 1, size, file_);
 		
 		if (i != num_clusters - 1)
 		{
-			fseek(file_, fat_start_ + (2 + cluster) * 2, SEEK_SET);
-			int16_t new_cluster;
-			fread(&new_cluster, sizeof (new_cluster), 1, file_);
+			fseek(file_, fat_start_ + (2 + cluster) * fat_entry_size_, SEEK_SET);
+			int new_cluster;
+			if (fat32_)
+			{
+				fread(&new_cluster, 4, 1, file_);
+				new_cluster &= (1 << 28) - 1;
+			}
+			else
+				fread(&new_cluster, 2, 1, file_);
 
 			cluster = new_cluster - 2;
 		}

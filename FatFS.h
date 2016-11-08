@@ -8,7 +8,7 @@
 // 1 - first version
 // 2 - added long file names
 // 3 - added fat32
-#define FAT_VERSION 2
+#define FAT_VERSION 3
 
 class FatFS : public FSInterface
 {
@@ -39,6 +39,9 @@ private:
 	int fat_start_;
 	int root_start_;
 	int data_start_;
+	bool fat32_;
+	int root_cluster_;
+	int fat_entry_size_;
 
 	string name_;
 	bool long_name_;
