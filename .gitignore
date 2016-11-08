@@ -1,0 +1,7 @@
+*.fs
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+fs
+mnt/
