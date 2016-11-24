@@ -146,7 +146,7 @@ void Application::work_(FSInterface* fs, FILE* file)
 			for (FileInfo& file : dir)
 			{
 				empty = false;
-				printf("%20s %c %5d | %s\n", file.name.c_str(), file.dir ? 'D' : 'F', file.size,file.info.c_str());
+				printf("%35s %c %5d | %s\n", file.name.c_str(), file.dir ? 'D' : 'F', file.size,file.info.c_str());
 			}
 			if (empty)
 				printf("Empty directory\n");

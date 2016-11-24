@@ -205,10 +205,10 @@ bool FatFS::parse_entry_(msdos_dir_entry& entry, vector<FileInfo>& files)
 	if (entry.attr & (1 << 1)) file.info += "hidden ";
 	if (entry.attr & (1 << 2)) file.info += "system ";
 	if (entry.attr & (1 << 3)) file.info += "volumelabel ";
-	if (entry.attr & (1 << 6)) file.info += "archive ";
-	file.info += "creation date: " + get_date_(entry.cdate) + " " + get_time_(entry.ctime) + "; ";
-	file.info += "modify date: " + get_date_(entry.date) + " " + get_time_(entry.time) + "; ";
-	file.info += "access date: " + get_date_(entry.adate) + "; ";
+	if (entry.attr & (1 << 5)) file.info += "archive ";
+	file.info += "creation time: " + get_date_(entry.cdate) + " " + get_time_(entry.ctime) + "; ";
+	file.info += "modify time: " + get_date_(entry.date) + " " + get_time_(entry.time) + "; ";
+	file.info += "access time: " + get_date_(entry.adate) + "; ";
 
 	files.push_back(file);
 	return true;

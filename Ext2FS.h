@@ -2,6 +2,7 @@
 #define EXT2_FS
 
 #include "FSInterface.h"
+#include <ext2fs/ext2_fs.h>
 
 // Version notes:
 // 1 - first version
@@ -23,7 +24,14 @@ public:
 
 private:
 
+	string get_time_string_(int32_t time);
+	ext2_inode get_inode_(int64_t n);
+	int64_t get_block_pos_(ext2_inode& inode, int64_t n);
+
+	FILE* file_;
 	string info_;
+	int block_size_;
+	int inodes_per_group_;
 
 };
 
