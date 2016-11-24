@@ -2,7 +2,7 @@
 #define FAT_FS
 
 #include "FSInterface.h"
-#include <linux/msdos_fs.h>
+#include <msdos_fs.h>
 
 // Version notes:
 // 1 - first version

@@ -2,7 +2,7 @@
 #define EXT2_FS
 
 #include "FSInterface.h"
-#include <ext2fs/ext2_fs.h>
+#include <ext2_fs.h>
 
 // Version notes:
 // 1 - first version
