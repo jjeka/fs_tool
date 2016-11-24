@@ -196,6 +196,7 @@ bool Ext2FS::cat(fid_t fid, string& output)
 		int64_t block_pos = get_block_pos_(inode, i);
 		if (block_pos == -1)
 		{
+			info_ = "File size is too big";
 			delete[] buf;
 			return false;
 		}
