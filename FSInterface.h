@@ -25,8 +25,8 @@ class FSInterface
 {
 public:
 
-	virtual string get_name() = 0;
-	virtual int get_version() = 0;
+	virtual string get_name() const = 0;
+	virtual int get_version() const = 0;
 
 	virtual bool init(FILE* file) = 0;
 	virtual string info() = 0;

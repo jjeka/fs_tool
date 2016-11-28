@@ -14,8 +14,8 @@ class FatFS : public FSInterface
 {
 public:
 
-	virtual string get_name() override;
-	virtual int get_version() override;
+	virtual string get_name() const override;
+	virtual int get_version() const override;
 
 	virtual bool init(FILE* file) override;
 	virtual string info() override;
@@ -28,7 +28,7 @@ private:
 
 	string get_date_(uint16_t date);
 	string get_time_(uint16_t time);
-	bool parse_entry_(msdos_dir_entry& entry, vector<FileInfo>& files);
+	bool parse_entry_(const msdos_dir_entry& entry, vector<FileInfo>& files);
 
 	FILE* file_;
 	string info_;

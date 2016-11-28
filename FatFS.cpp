@@ -1,11 +1,11 @@
 #include "FatFS.h"
 
-string FatFS::get_name()
+string FatFS::get_name() const
 {
 	return "fat";
 }
 
-int FatFS::get_version()
+int FatFS::get_version() const
 {
 	return FAT_VERSION;
 }
@@ -148,7 +148,7 @@ bool FatFS::ls(fid_t fid, vector<FileInfo>& files)
 	return true;
 }
 
-bool FatFS::parse_entry_(msdos_dir_entry& entry, vector<FileInfo>& files)
+bool FatFS::parse_entry_(const msdos_dir_entry& entry, vector<FileInfo>& files)
 {
 	if (entry.name[0] == 0x00)
 		return false;

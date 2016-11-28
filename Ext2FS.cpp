@@ -1,11 +1,11 @@
 #include "Ext2FS.h"
 
-string Ext2FS::get_name()
+string Ext2FS::get_name() const
 {
 	return "ext2";
 }
 
-int Ext2FS::get_version()
+int Ext2FS::get_version() const
 {
 	return EXT2_VERSION;
 }
@@ -82,7 +82,7 @@ string Ext2FS::get_time_string_(int32_t time)
 }
 
 
-int64_t Ext2FS::get_block_pos_(ext2_inode& inode, int64_t n)
+int64_t Ext2FS::get_block_pos_(const ext2_inode& inode, int64_t n)
 {
 	int addresses_per_block = block_size_ / sizeof (int32_t);
 
