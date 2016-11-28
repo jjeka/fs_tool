@@ -184,12 +184,11 @@ bool Ext2FS::ls(fid_t fid, vector<FileInfo>& files)
 	return true;
 }
 
-bool Ext2FS::cat(fid_t fid, string& output)
+bool Ext2FS::cat(fid_t fid, std::vector<char>& output)
 {
 	ext2_inode inode = get_inode_(fid);
 
-	char* buf = new char[inode.i_size + 1];
-	memset(buf, 0, inode.i_size + 1);
+	output = std::vector<char>(inode.i_size);
 
 	for (int64_t i = 0; i < inode.i_blocks && i * block_size_ < inode.i_size; i++)
  	{
@@ -197,17 +196,14 @@ bool Ext2FS::cat(fid_t fid, string& output)
 		if (block_pos == -1)
 		{
 			info_ = "File size is too big";
-			delete[] buf;
 			return false;
 		}
 
 		fseek(file_, block_pos, SEEK_SET);
 
 		int64_t size = (inode.i_size - i * block_size_ >= block_size_) ? block_size_ : inode.i_size % block_size_;
-		fread(&buf[i * block_size_], 1, size, file_);
+		fread(&output.data()[i * block_size_], 1, size, file_);
 	}
 
-	output = buf;
-	delete[] buf;
 	return true;
 }

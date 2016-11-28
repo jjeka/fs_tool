@@ -20,7 +20,7 @@ public:
 	virtual void destroy() override;
 
 	virtual bool ls(fid_t id, vector<FileInfo>& files) override;
-	virtual bool cat(fid_t id, string& output) override;
+	virtual bool cat(fid_t id, std::vector<char>& output) override;
 
 private:
 

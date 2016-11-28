@@ -214,7 +214,7 @@ bool FatFS::parse_entry_(const msdos_dir_entry& entry, vector<FileInfo>& files)
 	return true;
 }
 
-bool FatFS::cat(fid_t fid, string& output)
+bool FatFS::cat(fid_t fid, std::vector<char>& output)
 {
 	msdos_dir_entry entry;
 	fseek(file_, fid, SEEK_SET);
@@ -225,8 +225,7 @@ bool FatFS::cat(fid_t fid, string& output)
 		return false;
 	}
 
-	char* buf = new char[entry.size + 1];
-	memset(buf, 0, entry.size + 1);
+	output = std::vector<char>(entry.size);
 
 	int num_clusters = entry.size / cluster_size_ + (entry.size % cluster_size_ ? 1 : 0);
 	int cluster = entry.start + (fat32_ ? (entry.starthi << 16) : 0) - 2;
@@ -239,7 +238,7 @@ bool FatFS::cat(fid_t fid, string& output)
 
 		size_t seek = data_start_ + cluster * cluster_size_;
 		fseek(file_, seek, SEEK_SET);
-		fread(&buf[i * cluster_size_], 1, size, file_);
+		fread(&output.data()[i * cluster_size_], 1, size, file_);
 		
 		if (i != num_clusters - 1)
 		{
@@ -256,9 +255,6 @@ bool FatFS::cat(fid_t fid, string& output)
 			cluster = new_cluster - 2;
 		}
 	}
-
-	output = buf;
-	delete[] buf;
 
 	return true;
 }

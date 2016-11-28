@@ -158,7 +158,7 @@ void Application::work_(FSInterface* fs, FILE* file)
 				printf("Argument required\n");
 				continue;
 			}
-			printf("Content of %s%s (if file contains \\0 you only see only beginning of file)\n", get_dir_name_(path).c_str(), arg.c_str());
+			printf("Content of %s%s\n", get_dir_name_(path).c_str(), arg.c_str());
 			
 			fid_t fid;
 			bool found = false;
@@ -181,11 +181,11 @@ void Application::work_(FSInterface* fs, FILE* file)
 				printf("File %s not found in directory\n", arg.c_str());
 			else if (ok)
 			{
-				string output;
+				std::vector<char> output;
 				if (!fs->cat(fid, output))
 					printf("ERROR: can't cat file! Info: %s\n", fs->info().c_str());
 				else
-					printf("%s", output.c_str());
+					fwrite(output.data(), sizeof (char), output.size(), stdout);
 			}
 		}
 		else if (cmdname == "cd")

@@ -33,7 +33,7 @@ public:
 	virtual void destroy() = 0;
 
 	virtual bool ls(fid_t id, vector<FileInfo>& files) = 0;
-	virtual bool cat(fid_t id, string& output) = 0;
+	virtual bool cat(fid_t id, std::vector<char>& output) = 0;
 };
 
 #endif // FS_INTERFACE
